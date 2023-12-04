@@ -1,0 +1,7 @@
+version: '3'
+services:
+  web_voyager:
+    build:
+      context: .
+    ports:
+      - "8080:8080"

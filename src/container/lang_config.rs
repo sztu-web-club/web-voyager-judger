@@ -1,21 +1,25 @@
 use nix::libc::rlim_t;
 
-static STD_MB: u64 = 0x100000;
-
 pub trait ResourceLimit {
+  /// max time cpu being used in seconds
   fn max_cpu_time(&self) -> rlim_t;
+  /// max time process running in seconds
   fn max_real_time(&self) -> rlim_t;
+  /// max virtual memory in bytes
   fn max_memory(&self) -> rlim_t;
+  /// max stack size in bytes
   fn max_stack(&self) -> rlim_t;
+  /// max process number
   fn max_process(&self) -> rlim_t;
+  /// max output(stdout stderr) size in bytes
   fn max_output(&self) -> rlim_t;
 }
 
-pub struct CorCPPResLimit {}
+pub struct DefaultResLimit {}
 
-impl ResourceLimit for CorCPPResLimit {
+impl ResourceLimit for DefaultResLimit {
   fn max_cpu_time(&self) -> rlim_t {
-    return 1
+    return 5
   }
 
   fn max_real_time(&self) -> rlim_t {
@@ -23,19 +27,19 @@ impl ResourceLimit for CorCPPResLimit {
   }
 
   fn max_memory(&self) -> rlim_t {
-    return STD_MB / 2 * 3
+    return 0x8000000
   }
 
   fn max_stack(&self) -> rlim_t {
-    return STD_MB << 8
+    return 0x8000000
   }
 
   fn max_process(&self) -> rlim_t {
-    return 5
+    return 1
   }
 
   fn max_output(&self) -> rlim_t {
-    return 1000
+    return 0x8000000
   }
 }
 

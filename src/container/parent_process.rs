@@ -1,4 +1,5 @@
-use nix::{libc, unistd::{Pid, sleep}, sys::{signal::{kill, Signal}, wait::{waitpid, WaitPidFlag}}, errno::Errno};
+use log::{error, debug};
+use nix::{libc::{self, WSTOPPED, rusage}, unistd::{Pid, sleep}, sys::signal::{kill, Signal}, errno::Errno};
 
 use super::JudgeError;
 
@@ -8,6 +9,7 @@ struct ThreadData {
 }
 
 fn kill_process(child_pid: Pid) -> Result<(), Errno> {
+  println!("kill timeout executed");
   kill(child_pid, Signal::SIGKILL)
 }
 
@@ -27,18 +29,19 @@ pub unsafe fn require_usage(time_limit: u32, child_pid: Pid) -> Result<(), Judge
         } as *const ThreadData as *mut libc::c_void,
     ) != 0
     {
+      println!("pthread_create failed");
       let _ = kill_process(child_pid);
       return Err(JudgeError::PthreadFailed);
     }
-
-    match waitpid(child_pid, Some(WaitPidFlag::WSTOPPED)) {
-        Ok(_) => {},
-        Err(_) => {
-          let _ = kill_process(child_pid);
-          return Err(JudgeError::WaitFailed);
-        },
+    println!("pthread_create success");
+    let mut status: libc::c_int = 0;
+    let mut resource_usage: rusage = std::mem::zeroed();
+    if libc::wait4(child_pid.as_raw(), &mut status, WSTOPPED, &mut resource_usage) == -1 {
+      println!("wait4 failed");
+      let _ = kill_process(child_pid);
+      return Err(JudgeError::WaitFailed);
     }
-
+    println!("waitpid success");
     libc::pthread_cancel(handle);
     Ok(())
   }
@@ -46,15 +49,20 @@ pub unsafe fn require_usage(time_limit: u32, child_pid: Pid) -> Result<(), Judge
 
 extern "C" fn kill_timeout(arg: *mut libc::c_void) -> *mut libc::c_void {
   unsafe {
+    println!("kill_timeout started");
     let thread_data: &ThreadData = &*(arg as *const ThreadData);
     // failed to set curr thread unjoinable
     if libc::pthread_detach(libc::pthread_self()) != 0 {
+      println!("pthread_detach failed");
       let _ = kill_process(thread_data.child_pid);
     }
+    println!("pthread_detach success");
     if sleep(thread_data.timeout) != 0 {
+      println!("sleep failed");
       let _ = kill_process(thread_data.child_pid);
     }
+    println!("sleep success");
     let _ = kill_process(thread_data.child_pid);
-    libc::pthread_exit(core::ptr::null_mut());
-  };
+    core::ptr::null_mut()
+  }
 }
