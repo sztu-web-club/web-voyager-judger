@@ -1,5 +1,4 @@
-use log::{error, debug};
-use nix::{libc::{self, WSTOPPED, rusage}, unistd::{Pid, sleep}, sys::signal::{kill, Signal}, errno::Errno};
+use nix::{errno::Errno, libc::{self, rusage}, sys::{signal::{kill, Signal}, wait::{waitpid, WaitPidFlag}}, unistd::{sleep, Pid}};
 
 use super::JudgeError;
 
@@ -34,10 +33,10 @@ pub unsafe fn require_usage(time_limit: u32, child_pid: Pid) -> Result<(), Judge
       return Err(JudgeError::PthreadFailed);
     }
     println!("pthread_create success");
-    let mut status: libc::c_int = 0;
-    let mut resource_usage: rusage = std::mem::zeroed();
-    if libc::wait4(child_pid.as_raw(), &mut status, WSTOPPED, &mut resource_usage) == -1 {
-      println!("wait4 failed");
+    let status: libc::c_int = 0;
+    let resource_usage: rusage = std::mem::zeroed();
+    if waitpid(child_pid, Some(WaitPidFlag::WNOHANG)).is_err() {
+      println!("waitpid failed");
       let _ = kill_process(child_pid);
       return Err(JudgeError::WaitFailed);
     }

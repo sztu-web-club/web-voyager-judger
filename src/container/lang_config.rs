@@ -19,11 +19,11 @@ pub struct DefaultResLimit {}
 
 impl ResourceLimit for DefaultResLimit {
   fn max_cpu_time(&self) -> rlim_t {
-    return 5
+    return 50
   }
 
   fn max_real_time(&self) -> rlim_t {
-    return 5
+    return 50
   }
 
   fn max_memory(&self) -> rlim_t {
@@ -35,7 +35,7 @@ impl ResourceLimit for DefaultResLimit {
   }
 
   fn max_process(&self) -> rlim_t {
-    return 1
+    return 10
   }
 
   fn max_output(&self) -> rlim_t {
