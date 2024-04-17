@@ -17,13 +17,13 @@ fn setup_res_limit(res_limit: Box<dyn ResourceLimit>) -> Result<(), Errno> {
 }
 
 fn open_file(infile_path: &String, outfile_path: &String) -> Result<(File, File), std::io::Error> {
-  let infile = OpenOptions::new().read(true).write(true).open(infile_path);
+  let infile = OpenOptions::new().read(true).write(true).create(true).open(infile_path);
   if infile.is_err() {
     return Err(infile.unwrap_err());
   }
   let mut buf = String::new();
   infile.as_ref().unwrap().read_to_string(&mut buf)?;
-  let outfile = OpenOptions::new().read(true).write(true).open(outfile_path);
+  let outfile = OpenOptions::new().read(true).write(true).create(true).open(outfile_path);
   if outfile.is_err() {
     return Err(outfile.unwrap_err());
   }

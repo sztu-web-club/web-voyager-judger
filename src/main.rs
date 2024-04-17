@@ -26,15 +26,14 @@ async fn main() -> tide::Result<()> {
   }
   init_env();
   let mut app = tide::new();
-  app.at("/orders/shoes").post(order_shoes);
+  app.at("/judge/submit").post(submit);
   println!("Listening on port {}", get_env("PORT"));
   app.listen(format!("127.0.0.1:{}", get_env("PORT"))).await?;
   Ok(())
 }
 
-async fn order_shoes(mut req: Request<()>) -> tide::Result {
-  println!("order_shoes");
-  let artifacts = compile(LangType::Cpp, "#include <iostream>\nint main() { std::cout << \"Hello, World!\"; return 0; }");
+async fn submit(mut req: Request<()>) -> tide::Result {
+  let artifacts = compile(LangType::Cpp, &String::from(req.body_string().await?));
   let run_res = run(RunConfig {
     exec_path: artifacts.unwrap(),
     exec_args: "".to_owned(),
